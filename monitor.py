@@ -33,11 +33,36 @@ NOTION_HEADERS = {
 
 def fetch_recent_notices() -> list[dict]:
     """
-    PLACEHOLDER – replace this later with real scraping from
-    Georgia Public Notice or Fulton Neighbor.
+    First version of the real scraper.
+    Tries to pull recent foreclosure notices from Georgia Public Notice.
+    This will need tuning over time because the site can change.
     """
-    print("WARNING: Using placeholder fetch_recent_notices(). No real notices yet.")
-    return []
+    print("Fetching recent Fulton foreclosure notices...")
+    notices = []
+
+    # Basic search URL for Fulton + foreclosure keywords
+    # Note: This site uses sessions and can be fragile
+    search_url = "https://www.georgiapublicnotice.com/Search.aspx"
+
+    try:
+        session = requests.Session()
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+        }
+
+        # Simple GET to start (real site needs form POST – this is a starting point)
+        resp = session.get(search_url, headers=headers, timeout=20)
+        resp.raise_for_status()
+
+        # For now we return empty and log that we reached the site
+        # Next improvement will add the actual search form submission
+        print("Reached Georgia Public Notice successfully.")
+        print("Full form-based search will be added in the next update.")
+        
+    except Exception as e:
+        print(f"Scraper error: {e}")
+
+    return notices
 
 
 def parse_notice(text: str, source_url: str = "") -> Optional[dict]:
