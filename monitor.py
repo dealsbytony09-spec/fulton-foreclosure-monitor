@@ -1,4 +1,3 @@
-
 def fetch_recent_notices() -> list[dict]:
     """
     Improved first real attempt at pulling Fulton foreclosure notices.
