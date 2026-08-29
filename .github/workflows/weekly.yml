@@ -2,7 +2,7 @@ name: Weekly Fulton Foreclosure Monitor
 
 on:
   schedule:
-    # Every Wednesday at 18:00 UTC (adjust as needed)
+    # Every Wednesday at 18:00 UTC
     - cron: "0 18 * * 3"
   workflow_dispatch:  # allows manual run from the Actions tab
 
@@ -27,7 +27,7 @@ jobs:
 
       - name: Run monitor
         env:
-          GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
-          GOOGLE_SA_JSON: ${{ secrets.GOOGLE_SA_JSON }}
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
         run: python monitor.py
