@@ -268,3 +268,5 @@ def main():
             send_slack_alert(parsed)
 
     print(f"Done. New: {new_count}, Flagged: {flagged_count}, Skipped (<4 days): {skipped_count}")
+if __name__ == "__main__":
+    main()
