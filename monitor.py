@@ -221,11 +221,40 @@ def main():
     notices = fetch_recent_notices()
     print(f"Fetched {len(notices)} notices")
 
-    new_count = flagged_count = 0
+    new_count = flagged_count = skipped_count = 0
+    today = datetime.utcnow().date()
+
     for n in notices:
         parsed = parse_notice(n.get("raw_text", ""), n.get("source_url", ""))
         if not parsed or already_seen(parsed["raw_hash"]):
             continue
+
+        # --- 4-day filter ---
+        sale_date_str = parsed.get("sale_date")
+        if sale_date_str:
+            try:
+                # Simple parsing for formats like "October 2026" or "October 6, 2026"
+                months = {
+                    "january": 1, "february": 2, "march": 3, "april": 4,
+                    "may": 5, "june": 6, "july": 7, "august": 8,
+                    "september": 9, "october": 10, "november": 11, "december": 12
+                }
+                parts = sale_date_str.lower().replace(",", "").split()
+                month = months.get(parts[0])
+                year = int(parts[-1]) if parts[-1].isdigit() else None
+                day = 1
+                if len(parts) >= 2 and parts[1].isdigit():
+                    day = int(parts[1])
+
+                if month and year:
+                    sale_dt = datetime(year, month, day).date()
+                    days_until = (sale_dt - today).days
+                    if days_until < 4:
+                        print(f"Skipping (less than 4 days away): {parsed.get('address')} – {sale_date_str}")
+                        skipped_count += 1
+                        continue
+            except Exception as e:
+                print(f"Could not parse sale date '{sale_date_str}': {e}")
 
         assessment = lookup_assessment(parsed.get("address"), parsed.get("parcel_id"))
         parsed.update(assessment)
@@ -238,8 +267,4 @@ def main():
             flagged_count += 1
             send_slack_alert(parsed)
 
-    print(f"Done. New: {new_count}, Flagged: {flagged_count}")
-
-
-if __name__ == "__main__":
-    main()
+    print(f"Done. New: {new_count}, Flagged: {flagged_count}, Skipped (<4 days): {skipped_count}")
