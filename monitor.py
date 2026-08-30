@@ -32,33 +32,50 @@ NOTION_HEADERS = {
 
 def fetch_recent_notices() -> list[dict]:
     """
-    Current scraper status:
-    - Can connect to Georgia Public Notice
-    - Cannot yet extract real notices (site uses complex ViewState forms)
-    - Returns empty list for now
+    Reads notices from two places:
+    1. Automatic website attempt (still limited)
+    2. notices.txt file (this is how you feed real notices)
     """
     print("Fetching recent Fulton foreclosure notices...")
     notices = []
 
+    # --- 1. Try the website (still limited) ---
     search_url = "https://www.georgiapublicnotice.com/Search.aspx"
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.9",
     }
 
     try:
         session = requests.Session()
-        resp = session.get(search_url, headers=headers, timeout=25)
+        resp = session.get(search_url, headers=headers, timeout=20)
         resp.raise_for_status()
-        print(f"Connected to Georgia Public Notice (status {resp.status_code})")
-        print("NOTE: Automatic scraper is still limited. No notices found this run.")
-    except requests.exceptions.RequestException as e:
-        print(f"Network error: {e}")
+        print(f"Website reachable (status {resp.status_code})")
+        print("NOTE: Automatic website extraction is still limited.")
     except Exception as e:
-        print(f"Unexpected error: {e}")
+        print(f"Website error: {e}")
 
-    print(f"Returning {len(notices)} notices")
+    # --- 2. Read from notices.txt (practical way) ---
+    try:
+        with open("notices.txt", "r", encoding="utf-8", errors="ignore") as f:
+            content = f.read().strip()
+
+        if content:
+            raw_notices = [n.strip() for n in content.split("---") if n.strip()]
+            for raw in raw_notices:
+                notices.append({
+                    "raw_text": raw,
+                    "source_url": "manual/notices.txt"
+                })
+            print(f"Loaded {len(raw_notices)} notice(s) from notices.txt")
+        else:
+            print("notices.txt is empty – no manual notices to process")
+    except FileNotFoundError:
+        print("notices.txt not found")
+    except Exception as e:
+        print(f"Error reading notices.txt: {e}")
+
+    print(f"Total notices ready to process: {len(notices)}")
     return notices
 
 
